@@ -2,30 +2,29 @@ package main
 
 import (
 	"bufio"
-	"crypto/rand"
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
-	host "github.com/libp2p/go-libp2p-host"
 	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	host "github.com/libp2p/go-libp2p-host"
 	inet "github.com/libp2p/go-libp2p-net"
-	multiaddr "github.com/multiformats/go-multiaddr"
-	protocol "github.com/libp2p/go-libp2p-protocol"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
-	discovery "github.com/libp2p/go-libp2p/p2p/discovery"
+	protocol "github.com/libp2p/go-libp2p-protocol"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-
+	discovery "github.com/libp2p/go-libp2p/p2p/discovery"
+	multiaddr "github.com/multiformats/go-multiaddr"
 	//"github.com/gogo/protobuf/proto"
 )
 
 type discoveryNotifee struct {
-	ctx context.Context
-	host host.Host
+	ctx      context.Context
+	host     host.Host
 	PeerChan chan pstore.PeerInfo
 }
 
@@ -110,10 +109,10 @@ func writeData(rw *bufio.ReadWriter) {
 func buildOpts(port int, priv crypto.PrivKey) []libp2p.Option {
 	ip := "0.0.0.0"
 
-    sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ip, port))
-    if err != nil {
-            log.Fatal(err)
-    }
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ip, port))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return []libp2p.Option{
 		libp2p.Identity(priv),
@@ -146,11 +145,11 @@ func main() {
 	ctx := context.Background()
 
 	// generate random key
-    r := rand.Reader
-    priv, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, r)
-    if err != nil {
-            log.Fatal(err)
-    }
+	r := rand.Reader
+	priv, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create libp2p host
 	host, err := libp2p.New(ctx, buildOpts(listenPort, priv)...)
@@ -173,66 +172,6 @@ func main() {
 	// start mDNS discovery
 	pchan := initMDNS(ctx, host, "noot")
 
-	// start pubsub 
-	//rt := &pubsub.RandomSubRouter{}
-	// ps, err := pubsub.NewRandomSub(ctx, host) 
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // join main room
-	// sub, err := ps.Subscribe("main")
-
-	// go func() {
-	// 	for {
-	// 		ps.Publish("main", []byte(fmt.Sprintf("hello from %s", host.ID())))
-	// 		time.Sleep(time.Second)
-	// 	}
-	// }()
-
-	// go func() {
-	// 	defer sub.Cancel()
-
-	// 	var msg *pubsub.Message
-	// 	var err error
-
-	// 	// Recover from any panic as part of the receive p2p msg process.
-	// 	defer func() {
-	// 		if r := recover(); r != nil {
-	// 			fmt.Println(msg)
-	// 			// log.WithFields(logrus.Fields{
-	// 			// 	"r":        r,
-	// 			// 	"msg.Data": attemptToConvertPbToString(msg.Data, message),
-	// 			// }).Error("P2P message caused a panic! Recovering...")
-	// 		}
-	// 	}()
-
-	// 	for {
-	// 		msg, err = sub.Next(ctx)
-
-	// 		if ctx.Err() != nil {
-	// 			fmt.Println("context error:", ctx.Err())
-	// 			return
-	// 		}
-	// 		if err != nil {
-	// 			fmt.Printf("Failed to get next message: %v\n", err)
-	// 			continue
-	// 		}
-
-	// 		if msg == nil || msg.GetFrom() == host.ID() {
-	// 			continue
-	// 		}
-
-	// 		// d := proto.Clone(message)
-	// 		// if err := proto.Unmarshal(msg.Data, d); err != nil {
-	// 		// 	fmt.Println("Failed to decode data", err)
-	// 		// 	continue
-	// 		// }
-
-	// 		//handler(d, msg.GetFrom())
-	// 	}
-	// }()
-
 	// get notified when peer connects
 	peer := <-pchan
 	fmt.Printf("found peer: %s connecting...\n", peer.ID)
@@ -242,7 +181,6 @@ func main() {
 	// open stream with peer
 	stream, err := host.NewStream(ctx, peer.ID, pid)
 	if err != nil {
-		fmt.Printf("stream err: %s\n", err)
 	} else {
 		rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 		go writeData(rw)
@@ -253,5 +191,5 @@ func main() {
 	// add peer to pubsub router
 	//ps.AddPeer(peer.ID, pid)
 
-	select{}
+	select {}
 }
